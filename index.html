@@ -3079,21 +3079,25 @@ function frame(now) {
       const camHeight = 1.95;
 
       // Update camera yaw offset for turn left/right
-      if (isHoldingTurnLeft)  cameraYawOffset = Math.max(cameraYawOffset - 0.025, -Math.PI * 0.6);
-      if (isHoldingTurnRight) cameraYawOffset = Math.min(cameraYawOffset + 0.025,  Math.PI * 0.6);
-      // Spring back to center when not turning
-      if (!isHoldingTurnLeft && !isHoldingTurnRight) cameraYawOffset *= 0.92;
+      if (isHoldingTurnLeft)  cameraYawOffset = Math.max(cameraYawOffset - 0.028, -Math.PI * 0.72);
+      if (isHoldingTurnRight) cameraYawOffset = Math.min(cameraYawOffset + 0.028,  Math.PI * 0.72);
+      // Spring back to behind-runner when not turning
+      if (!isHoldingTurnLeft && !isHoldingTurnRight) cameraYawOffset *= 0.90;
 
-      // Rotate the behind-camera position by cameraYawOffset around the runner
-      const baseDir = tg.clone().multiplyScalar(-camDist);
-      const cosY = Math.cos(cameraYawOffset), sinY = Math.sin(cameraYawOffset);
-      const rotDir = new THREE.Vector3(
-        baseDir.x * cosY - baseDir.z * sinY,
-        0,
-        baseDir.x * sinY + baseDir.z * cosY
+      // Orbit camera around the runner as the true center
+      // Base direction: directly behind runner along route tangent
+      const runnerWorldPos = playerRunner.g.position.clone();
+      const baseAngle = Math.atan2(tg.x, tg.z) + Math.PI; // behind runner = forward tangent + 180°
+      const totalAngle = baseAngle + cameraYawOffset;
+
+      const desiredCamPos = new THREE.Vector3(
+        runnerWorldPos.x + Math.sin(totalAngle) * camDist,
+        runnerWorldPos.y + camHeight,
+        runnerWorldPos.z + Math.cos(totalAngle) * camDist
       );
-      const desiredCamPos = p.clone().add(rotDir).add(new THREE.Vector3(0, camHeight, 0));
-      const desiredTarget = p.clone().add(tg.clone().multiplyScalar(3.5)).add(new THREE.Vector3(0, 1.1, 0));
+      // Always look directly at the runner (slightly above feet)
+      const desiredTarget = runnerWorldPos.clone().add(new THREE.Vector3(0, 1.1, 0));
+
       camera.position.lerp(desiredCamPos, 0.12);
       controls.target.lerp(desiredTarget, 0.12);
     }
