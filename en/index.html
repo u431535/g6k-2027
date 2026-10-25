@@ -255,12 +255,19 @@
 .run-steer-btn {
   background: var(--paper);
   color: var(--ink);
-  padding: 14px 22px;
-  font-size: 0.92rem;
+  padding: 12px 18px;
+  min-width: 50px;
+  height: 50px;
+  border-radius: 999px;
+  font-size: 1.25rem;
   font-weight: 900;
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 8px;
+}
+.run-steer-btn .icon {
+  font-size: 1.25rem;
+  line-height: 1;
 }
 .run-steer-btn:hover {
   background: var(--field);
@@ -898,23 +905,30 @@
   .run-mobile-steer-dock {
     display: flex;
     flex-direction: row;
-    gap: 8px;
-    order: 1;
+    gap: 5px;
   }
   .run-steer-btn {
-    padding: 10px 12px;
-    min-width: 56px;
-    height: 56px;
-    border-radius: 18px;
+    padding: 0;
+    min-width: 48px;
+    width: 48px;
+    height: 52px;
+    border-radius: 16px;
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 2px;
-    box-shadow: 0 6px 18px rgba(17, 18, 34, 0.22);
+    box-shadow: 0 4px 14px rgba(17, 18, 34, 0.18);
   }
-  .run-steer-btn .icon { font-size: 1.15rem; }
-  .run-steer-btn span:not(.icon) { font-size: 0.72rem; font-weight: 900; }
+  .run-steer-btn .icon { font-size: 1.25rem; line-height: 1; }
+  /* Turn buttons slightly subdued vs move buttons */
+  #btnTurnLeft, #btnTurnRight {
+    background: rgba(240, 240, 246, 0.96);
+    min-width: 44px;
+    width: 44px;
+    height: 48px;
+    border-radius: 14px;
+    opacity: 0.88;
+  }
+  #btnTurnLeft .icon, #btnTurnRight .icon { font-size: 1.18rem; }
 
   .run-forward-btn {
     order: 2;
@@ -1286,14 +1300,11 @@ button:focus-visible, a:focus-visible, .pill:focus-visible { outline: 2px solid 
   <!-- Bottom Controls (Ergonomic Dual-Thumb & Desktop Support) -->
   <div class="run-bottom-controls">
     <div class="run-mobile-steer-dock">
-      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnLeft" title="Steer Left (A / ← / Swipe Left)">
-        <span class="icon">◀</span>
-        <span>Left</span>
+      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnTurnLeft" title="Turn Camera Left (Q / Screen Left)" aria-label="Turn Camera Left">
+        <span class="icon">↺</span>
       </button>
-
-      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnRight" title="Steer Right (D / → / Swipe Right)">
-        <span class="icon">▶</span>
-        <span>Right</span>
+      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnLeft" title="Steer Left (A / ← / Swipe Left)" aria-label="Steer Left">
+        <span class="icon">◀</span>
       </button>
     </div>
 
@@ -1302,6 +1313,15 @@ button:focus-visible, a:focus-visible, .pill:focus-visible { outline: 2px solid 
       <span class="text">Run</span>
       <span class="sub">Hold to sprint</span>
     </button>
+
+    <div class="run-mobile-steer-dock">
+      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnRight" title="Steer Right (D / → / Swipe Right)" aria-label="Steer Right">
+        <span class="icon">▶</span>
+      </button>
+      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnTurnRight" title="Turn Camera Right (E / Screen Right)" aria-label="Turn Camera Right">
+        <span class="icon">↻</span>
+      </button>
+    </div>
   </div>
 
 </div>
@@ -2612,6 +2632,9 @@ let isAutoRunning = false;
 let isHoldingForward = false;
 let isHoldingLeft = false;
 let isHoldingRight = false;
+let isHoldingTurnLeft = false;
+let isHoldingTurnRight = false;
+let cameraYawOffset = 0.0;
 let runStartTime = 0;
 let lastAnnouncedStation = -1;
 let isFinished = false;
@@ -2680,8 +2703,31 @@ function playFanfareSound() {
   } catch (e) {}
 }
 
-// 3D Player Character (Low arm swing + Jerry can carried at bottom in hand)
-const playerRunner = person(null, 1, 0.95, { top: teeMats, shorts: true, face: "smile" });
+// Player Character Running Cap
+function addPlayerCap(p) {
+  const capGroup = new THREE.Group();
+  // 1. Cap Crown
+  const crownMat = flat("#ff5515", { roughness: 0.65 });
+  const crown = mesh(new THREE.SphereGeometry(0.208, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.54), crownMat, 0, 1.47, -0.01);
+  capGroup.add(crown);
+  // 2. Visor / Brim
+  const visorMat = flat("#1e293b", { roughness: 0.55 });
+  const visor = mesh(new THREE.BoxGeometry(0.25, 0.024, 0.17), visorMat, 0, 1.455, 0.165);
+  visor.rotation.x = 0.12;
+  capGroup.add(visor);
+  // 3. Official 6K Badge
+  const badge = mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.018, 10), flat("#ffffff"), 0, 1.54, 0.125);
+  badge.rotation.x = Math.PI / 2;
+  capGroup.add(badge);
+  // 4. Top Button
+  const button = mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.016, 8), flat("#1e293b"), 0, 1.62, -0.01);
+  capGroup.add(button);
+  p.g.add(capGroup);
+}
+
+// 3D Player Character (Unisex athletic runner with cap)
+const playerRunner = person(null, 1, 0.94, { top: teeMats, shorts: true, face: "smile" });
+addPlayerCap(playerRunner);
 bib(playerRunner);
 const playerJerry = jerryCan(1.0);
 playerJerry.position.set(0, -0.68, 0);
@@ -2725,6 +2771,379 @@ function animateRunner(p, t, speed, carrying) {
 
     p.armL.rotation.set(0, 0, -0.08);
     p.armR.rotation.set(0, 0, carrying ? 0.18 : 0.08);
+  }
+}
+
+/* ---------- Ambient Track Runners ---------- */
+// Randomly generate Male runners, Female runners, Boy runners, Girl runners; Ratio 4:4:1:1
+// Running speed: Male fastest, Female second, Boy third, Girl slowest
+// Using translucent color schemes, continuously spawning and advancing along route, naturally disappearing after passing the finish line
+
+const AMBIENT_RUNNER_CONFIGS = {
+  male: {
+    type: "male",
+    scale: 0.95,
+    speedBase: 0.00067,
+    speedVar: 0.00007,
+    topColors: ["#2563eb", "#0284c7", "#ea580c", "#16a34a", "#4f46e5"],
+    pantsColors: ["#1e293b", "#0f172a", "#172554"],
+    skinColor: "#fed7aa",
+    hairColor: "#262626",
+    hasPonytail: false,
+    hasTwinTails: false,
+    targetOpacity: 0.70
+  },
+  female: {
+    type: "female",
+    scale: 0.90,
+    speedBase: 0.00053,
+    speedVar: 0.00006,
+    topColors: ["#db2777", "#f43f5e", "#8b5cf6", "#06b6d4", "#ec4899"],
+    pantsColors: ["#334155", "#475569", "#1e1b4b"],
+    skinColor: "#ffe4e6",
+    hairColor: "#332211",
+    hasPonytail: true,
+    hasTwinTails: false,
+    targetOpacity: 0.70
+  },
+  boy: {
+    type: "boy",
+    scale: 0.63,
+    speedBase: 0.00040,
+    speedVar: 0.00005,
+    topColors: ["#eab308", "#f97316", "#22c55e", "#0284c7"],
+    pantsColors: ["#1d4ed8", "#1e293b"],
+    skinColor: "#fed7aa",
+    hairColor: "#1f2937",
+    hasPonytail: false,
+    hasTwinTails: false,
+    targetOpacity: 0.72
+  },
+  girl: {
+    type: "girl",
+    scale: 0.58,
+    speedBase: 0.00030,
+    speedVar: 0.00004,
+    topColors: ["#f472b6", "#a855f7", "#34d399", "#fb7185"],
+    pantsColors: ["#6366f1", "#4f46e5"],
+    skinColor: "#ffe4e6",
+    hairColor: "#3b1e08",
+    hasPonytail: false,
+    hasTwinTails: true,
+    targetOpacity: 0.72
+  }
+};
+
+function pickAmbientRunnerType() {
+  const r = Math.random();
+  if (r < 0.40) return "male";    // 40% (4)
+  if (r < 0.80) return "female";  // 40% (4)
+  if (r < 0.90) return "boy";     // 10% (1)
+  return "girl";                  // 10% (1)
+}
+
+const ambientRunners = [];
+let ambientSpawnTimer = 0;
+const MAX_AMBIENT_RUNNERS = 28;
+
+function makeTranslucentMat(color, opacity = 0.70) {
+  return new THREE.MeshStandardMaterial({
+    color: color,
+    transparent: true,
+    opacity: opacity,
+    roughness: 0.55,
+    metalness: 0.08,
+    depthWrite: false
+  });
+}
+
+// Front and back official event tee textures cache (cache Texture only, Material is created per-runner)
+const ambientTeeTexCache = new Map();
+function getAmbientTeeTextures(colorHex) {
+  if (ambientTeeTexCache.has(colorHex)) return ambientTeeTexCache.get(colorHex);
+
+  // Front Tee (Slogan & G6K Logo)
+  const frontTex = canvasTex(240, 300, (ctx, w, h) => {
+    ctx.fillStyle = colorHex;
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.beginPath();
+    ctx.roundRect(46, 68, 148, 22, 11);
+    ctx.fill();
+    ctx.fillStyle = colorHex;
+    ctx.font = '900 11.5px "Noto Sans TC", sans-serif';
+    ctx.textAlign = "center";
+    ctx.fillText("每步都是孩子的取水路", w / 2, 84);
+    g6kMark(ctx, w / 2, 136, 1.05);
+  });
+
+  // Back Tee (GLOBAL 6K FOR WATER logo & 6 cities as in official shirt)
+  const backTex = canvasTex(240, 300, (ctx, w, h) => {
+    ctx.fillStyle = colorHex;
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.92)";
+    ctx.lineWidth = 5.5;
+    ctx.beginPath();
+    ctx.roundRect(70, 65, 100, 126, 16);
+    ctx.stroke();
+    g6kMark(ctx, w / 2, 115, 0.78);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.font = '700 9.5px Inter, sans-serif';
+    ctx.textAlign = "center";
+    ctx.fillText("SEOUL / BUSAN / TAIPEI / TOKYO", w / 2, 226);
+    ctx.fillText("SINGAPORE / HONG KONG", w / 2, 240);
+  });
+
+  const pair = { frontTex, backTex };
+  ambientTeeTexCache.set(colorHex, pair);
+  return pair;
+}
+
+function createAmbientRunner(type, initialU = 0.002, offset = 0, isInitial = false) {
+  const cfg = AMBIENT_RUNNER_CONFIGS[type];
+  const mats = [];
+  const addMat = mat => { mats.push(mat); return mat; };
+
+  const topColor = cfg.topColors[Math.floor(Math.random() * cfg.topColors.length)];
+  const pantsColor = cfg.pantsColors[Math.floor(Math.random() * cfg.pantsColors.length)];
+
+  const skinMat = addMat(makeTranslucentMat(cfg.skinColor, cfg.targetOpacity));
+  const topMat = addMat(makeTranslucentMat(topColor, cfg.targetOpacity));
+  const pantsMat = addMat(makeTranslucentMat(pantsColor, cfg.targetOpacity));
+  const hairMat = addMat(makeTranslucentMat(cfg.hairColor, cfg.targetOpacity));
+  const shoeMat = addMat(makeTranslucentMat("#f1f5f9", cfg.targetOpacity));
+  const bibMat = addMat(makeTranslucentMat("#ffffff", cfg.targetOpacity));
+
+  const g = new THREE.Group();
+  const root = new THREE.Group();
+  g.add(root);
+
+  // Torso (Independent material instances per runner to avoid shared dispose/opacity decay)
+  const { frontTex, backTex } = getAmbientTeeTextures(topColor);
+  const plainSide = addMat(makeTranslucentMat(topColor, cfg.targetOpacity));
+  const frontMat = addMat(new THREE.MeshStandardMaterial({
+    map: frontTex,
+    transparent: true,
+    opacity: cfg.targetOpacity,
+    roughness: 0.65,
+    depthWrite: false
+  }));
+  const backMat = addMat(new THREE.MeshStandardMaterial({
+    map: backTex,
+    transparent: true,
+    opacity: cfg.targetOpacity,
+    roughness: 0.65,
+    depthWrite: false
+  }));
+  const torsoMats = [plainSide, plainSide, plainSide, plainSide, frontMat, backMat];
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.52, 0.24), torsoMats);
+  torso.position.y = 0.94;
+  root.add(torso);
+
+  // Sleeves
+  const sleeveL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.18), topMat);
+  sleeveL.position.set(-0.28, 1.10, 0);
+  const sleeveR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.18), topMat);
+  sleeveR.position.set(0.28, 1.10, 0);
+  root.add(sleeveL, sleeveR);
+
+  // Bib (Placed slightly below to avoid covering front logo)
+  const bibMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.11), bibMat);
+  bibMesh.position.set(0, 0.77, 0.125);
+  root.add(bibMesh);
+
+  // Head
+  const head = new THREE.Mesh(new THREE.IcosahedronGeometry(0.18, 1), skinMat);
+  head.position.y = 1.42;
+  root.add(head);
+
+  // Hair
+  const hairBase = new THREE.Mesh(new THREE.IcosahedronGeometry(0.19, 1), hairMat);
+  hairBase.position.set(0, 1.47, -0.02);
+  hairBase.scale.set(1, 0.65, 1);
+  root.add(hairBase);
+
+  let ponytail = null;
+  const twinTails = [];
+
+  if (cfg.hasPonytail) {
+    ponytail = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.02, 0.22, 6), hairMat);
+    ponytail.position.set(0, 1.48, -0.18);
+    ponytail.rotation.x = -0.55;
+    root.add(ponytail);
+  } else if (cfg.hasTwinTails) {
+    [-1, 1].forEach(side => {
+      const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.012, 0.16, 5), hairMat);
+      tail.position.set(side * 0.16, 1.44, -0.07);
+      tail.rotation.set(-0.35, 0, side * 0.45);
+      root.add(tail);
+      twinTails.push(tail);
+    });
+  }
+
+  // Arms
+  const makeArm = () => {
+    const armG = new THREE.Group();
+    const meshArm = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.058, 0.48, 6), skinMat);
+    meshArm.position.y = -0.24;
+    armG.add(meshArm);
+    return armG;
+  };
+  const armL = makeArm();
+  armL.position.set(-0.28, 1.15, 0);
+  const armR = makeArm();
+  armR.position.set(0.28, 1.15, 0);
+  root.add(armL, armR);
+
+  // Legs
+  const makeLeg = () => {
+    const legG = new THREE.Group();
+    const pantsPart = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.088, 0.24, 6), pantsMat);
+    pantsPart.position.y = -0.12;
+    const skinPart = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.06, 0.34, 6), skinMat);
+    skinPart.position.y = -0.38;
+    const footPart = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.07, 0.20), shoeMat);
+    footPart.position.set(0, -0.58, 0.03);
+    legG.add(pantsPart, skinPart, footPart);
+    return legG;
+  };
+  const legL = makeLeg();
+  legL.position.set(-0.12, 0.68, 0);
+  const legR = makeLeg();
+  legR.position.set(0.12, 0.68, 0);
+  root.add(legL, legR);
+
+  g.scale.setScalar(cfg.scale);
+
+  // Speed: Male fastest, Female second, Boy third, Girl slowest
+  const speed = cfg.speedBase + Math.random() * cfg.speedVar;
+
+  const runner = {
+    g,
+    root,
+    legL,
+    legR,
+    armL,
+    armR,
+    ponytail,
+    twinTails,
+    materials: mats,
+    cfg,
+    type,
+    speed,
+    u: initialU,
+    offset: offset !== 0 ? offset : (Math.random() - 0.5) * 1.05,
+    stepCycle: Math.random() * Math.PI * 2,
+    targetOpacity: cfg.targetOpacity,
+    currentOpacity: isInitial ? cfg.targetOpacity : 0.0,
+    isSpawning: !isInitial,
+    isFinishing: false
+  };
+
+  setAmbientRunnerOpacity(runner, runner.currentOpacity);
+  updateAmbientRunnerTransform(runner);
+  scene.add(g);
+  return runner;
+}
+
+function setAmbientRunnerOpacity(runner, op) {
+  runner.currentOpacity = Math.max(0, op);
+  const ratio = Math.max(0, Math.min(1, runner.currentOpacity / runner.targetOpacity));
+  for (let i = 0; i < runner.materials.length; i++) {
+    runner.materials[i].opacity = runner.cfg.targetOpacity * ratio;
+  }
+}
+
+function updateAmbientRunnerTransform(runner) {
+  const clampedU = Math.max(0.001, Math.min(0.999, runner.u));
+  const p = route.getPointAt(clampedU);
+  const tg = route.getTangentAt(clampedU);
+  const nrm = new THREE.Vector3(tg.z, 0, -tg.x);
+  runner.g.position.copy(p).addScaledVector(nrm, runner.offset);
+  runner.g.position.y = 0.02;
+  runner.g.rotation.y = Math.atan2(tg.x, tg.z);
+}
+
+function disposeAmbientRunner(runner) {
+  scene.remove(runner.g);
+}
+
+function updateAmbientTrackRunners(dt) {
+  // 1. Spawning with ratio 4:4:1:1
+  ambientSpawnTimer += dt;
+  if (ambientSpawnTimer >= 1.6 && ambientRunners.length < MAX_AMBIENT_RUNNERS) {
+    ambientSpawnTimer = 0;
+    const type = pickAmbientRunnerType();
+    const laneOffset = (Math.random() - 0.5) * 1.05;
+    const newRunner = createAmbientRunner(type, 0.002, laneOffset, false);
+    ambientRunners.push(newRunner);
+  }
+
+  // 2. Position updates, running animation and disappearance after finish
+  for (let i = ambientRunners.length - 1; i >= 0; i--) {
+    const runner = ambientRunners[i];
+
+    if (runner.isSpawning) {
+      runner.currentOpacity += dt * 1.6;
+      if (runner.currentOpacity >= runner.targetOpacity) {
+        runner.currentOpacity = runner.targetOpacity;
+        runner.isSpawning = false;
+      }
+      setAmbientRunnerOpacity(runner, runner.currentOpacity);
+    }
+
+    const moveDelta = runner.speed * (dt * 60);
+    runner.u += moveDelta;
+    runner.stepCycle += moveDelta * 260;
+
+    const legAmp = 0.85;
+    const armAmp = 0.45;
+    runner.legL.rotation.x = Math.sin(runner.stepCycle) * legAmp;
+    runner.legR.rotation.x = -Math.sin(runner.stepCycle) * legAmp;
+    runner.armL.rotation.x = -Math.sin(runner.stepCycle) * armAmp;
+    runner.armR.rotation.x = Math.sin(runner.stepCycle) * armAmp;
+    runner.armL.rotation.z = -0.12;
+    runner.armR.rotation.z = 0.12;
+
+    runner.root.position.y = 0.02 + Math.abs(Math.sin(runner.stepCycle)) * 0.04;
+    runner.root.rotation.x = 0.12;
+
+    if (runner.ponytail) {
+      runner.ponytail.rotation.x = -0.55 + Math.sin(runner.stepCycle * 2) * 0.14;
+    }
+    if (runner.twinTails && runner.twinTails.length > 0) {
+      runner.twinTails.forEach((tail, idx) => {
+        tail.rotation.x = -0.35 + Math.sin(runner.stepCycle * 2 + idx) * 0.12;
+      });
+    }
+
+    updateAmbientRunnerTransform(runner);
+
+    // Natural disappearance after passing finish line
+    if (runner.u >= 0.975) {
+      runner.isFinishing = true;
+    }
+
+    if (runner.isFinishing) {
+      runner.currentOpacity -= dt * 1.4;
+      setAmbientRunnerOpacity(runner, runner.currentOpacity);
+
+      if (runner.currentOpacity <= 0 || runner.u >= 1.0) {
+        disposeAmbientRunner(runner);
+        ambientRunners.splice(i, 1);
+      }
+    }
+  }
+}
+
+function initAmbientTrackRunners() {
+  const count = 20;
+  for (let i = 0; i < count; i++) {
+    const type = pickAmbientRunnerType();
+    const u = 0.04 + (i / count) * 0.90 + (Math.random() - 0.5) * 0.03;
+    const offset = (Math.random() - 0.5) * 1.05;
+    const runner = createAmbientRunner(type, Math.max(0.01, Math.min(0.96, u)), offset, true);
+    ambientRunners.push(runner);
   }
 }
 
@@ -2789,6 +3208,8 @@ const btnExitRun = document.getElementById("btnExitRun");
 const btnForward = document.getElementById("btnForward");
 const btnLeft = document.getElementById("btnLeft");
 const btnRight = document.getElementById("btnRight");
+const btnTurnLeft = document.getElementById("btnTurnLeft");
+const btnTurnRight = document.getElementById("btnTurnRight");
 const btnReplayRun = document.getElementById("btnReplayRun");
 const btnFinishOverview = document.getElementById("btnFinishOverview");
 const btnDownloadCert = document.getElementById("btnDownloadCert");
@@ -2839,6 +3260,9 @@ function setRunMode(active) {
     isHoldingForward = false;
     isHoldingLeft = false;
     isHoldingRight = false;
+    isHoldingTurnLeft = false;
+    isHoldingTurnRight = false;
+    cameraYawOffset = 0.0;
     isAutoRunning = false;
     btnToggleAuto.classList.remove("active");
     document.getElementById("autoStatus").textContent = "Off";
@@ -2894,10 +3318,14 @@ btnToggleAuto.onclick = () => {
   document.getElementById("autoStatus").textContent = isAutoRunning ? "On" : "Off";
 };
 
+const PLAYER_CRUISE_SPEED = 0.00063; // Cruise speed: between male runner (~0.00070) and female runner (~0.00056)
+const PLAYER_MAX_SPRINT_SPEED = 0.00095; // Max sprint speed on fast taps (exceeding male runner 0.00074)
+
 function stepForward() {
   if (isFinished) return;
   getAudioCtx();
-  runnerSpeed = Math.min(runnerSpeed + 0.0035, 0.0075);
+  // Stack speed boost on fast tapping to surpass male runners
+  runnerSpeed = Math.min(Math.max(runnerSpeed, PLAYER_CRUISE_SPEED) + 0.00009, PLAYER_MAX_SPRINT_SPEED);
   stepCycle += 1.8;
   animateRunner(playerRunner, stepCycle, runnerSpeed, isCarryingJerry);
   playStepSound();
@@ -2916,6 +3344,14 @@ btnRight.addEventListener("pointerdown", e => { e.preventDefault(); isHoldingRig
 btnRight.addEventListener("pointerup", e => { e.preventDefault(); isHoldingRight = false; });
 btnRight.addEventListener("pointerleave", () => { isHoldingRight = false; });
 
+btnTurnLeft.addEventListener("pointerdown", e => { e.preventDefault(); isHoldingTurnLeft = true; getAudioCtx(); });
+btnTurnLeft.addEventListener("pointerup", e => { e.preventDefault(); isHoldingTurnLeft = false; });
+btnTurnLeft.addEventListener("pointerleave", () => { isHoldingTurnLeft = false; });
+
+btnTurnRight.addEventListener("pointerdown", e => { e.preventDefault(); isHoldingTurnRight = true; getAudioCtx(); });
+btnTurnRight.addEventListener("pointerup", e => { e.preventDefault(); isHoldingTurnRight = false; });
+btnTurnRight.addEventListener("pointerleave", () => { isHoldingTurnRight = false; });
+
 renderer.domElement.addEventListener("click", () => {
   if (isRunMode && !isFinished) stepForward();
 });
@@ -2933,12 +3369,16 @@ addEventListener("keydown", e => {
   }
   if (e.key === "a" || e.key === "A" || e.key === "ArrowLeft") isHoldingLeft = true;
   if (e.key === "d" || e.key === "D" || e.key === "ArrowRight") isHoldingRight = true;
+  if (e.key === "q" || e.key === "Q") isHoldingTurnLeft = true;
+  if (e.key === "e" || e.key === "E") isHoldingTurnRight = true;
 });
 addEventListener("keyup", e => {
   if (!isRunMode) return;
   if (e.key === "w" || e.key === "W" || e.key === "ArrowUp" || e.key === " ") isHoldingForward = false;
   if (e.key === "a" || e.key === "A" || e.key === "ArrowLeft") isHoldingLeft = false;
   if (e.key === "d" || e.key === "D" || e.key === "ArrowRight") isHoldingRight = false;
+  if (e.key === "q" || e.key === "Q") isHoldingTurnLeft = false;
+  if (e.key === "e" || e.key === "E") isHoldingTurnRight = false;
 });
 
 btnReplayRun.onclick = () => {
@@ -3451,7 +3891,13 @@ function updateRunHUD() {
 const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const tmp = new THREE.Vector3();
 anim.forEach(f => f(0));
+
+let lastAmbientFrameTime = performance.now();
 function frame(now) {
+  const dt = Math.min(Math.max((now - lastAmbientFrameTime) / 1000, 0.001), 0.1);
+  lastAmbientFrameTime = now;
+  updateAmbientTrackRunners(dt);
+
   const s = now / 1000;
   if (tween) {
     const k = Math.min((now - tween.t0) / tween.ms, 1), e = ease(k);
@@ -3465,9 +3911,14 @@ function frame(now) {
   if (isRunMode) {
     let targetSpeed = 0.0;
     if (isAutoRunning || isHoldingForward) {
-      targetSpeed = isHoldingForward ? 0.0035 : 0.0022;
+      targetSpeed = PLAYER_CRUISE_SPEED;
     }
-    runnerSpeed += (targetSpeed - runnerSpeed) * 0.15;
+    if (runnerSpeed > targetSpeed) {
+      // Sprint boost smoothly decays back to cruise speed on fast tapping
+      runnerSpeed += (targetSpeed - runnerSpeed) * 0.038;
+    } else {
+      runnerSpeed += (targetSpeed - runnerSpeed) * 0.15;
+    }
 
     if (isHoldingLeft) runnerOffset = Math.max(runnerOffset - 0.024, -0.65);
     if (isHoldingRight) runnerOffset = Math.min(runnerOffset + 0.024, 0.65);
@@ -3498,8 +3949,25 @@ function frame(now) {
       const tg = route.getTangentAt(runnerU);
       const camDist = 4.2;
       const camHeight = 1.95;
-      const desiredCamPos = p.clone().sub(tg.clone().multiplyScalar(camDist)).add(new THREE.Vector3(0, camHeight, 0));
-      const desiredTarget = p.clone().add(tg.clone().multiplyScalar(3.5)).add(new THREE.Vector3(0, 1.1, 0));
+
+      // Update camera yaw offset for turn left/right
+      if (isHoldingTurnLeft)  cameraYawOffset = Math.max(cameraYawOffset - 0.028, -Math.PI * 0.72);
+      if (isHoldingTurnRight) cameraYawOffset = Math.min(cameraYawOffset + 0.028,  Math.PI * 0.72);
+      // Spring back to behind-runner when not turning
+      if (!isHoldingTurnLeft && !isHoldingTurnRight) cameraYawOffset *= 0.90;
+
+      // Orbit camera around the runner as the true center
+      const runnerWorldPos = playerRunner.g.position.clone();
+      const baseAngle = Math.atan2(tg.x, tg.z) + Math.PI; // behind runner
+      const totalAngle = baseAngle + cameraYawOffset;
+
+      const desiredCamPos = new THREE.Vector3(
+        runnerWorldPos.x + Math.sin(totalAngle) * camDist,
+        runnerWorldPos.y + camHeight,
+        runnerWorldPos.z + Math.cos(totalAngle) * camDist
+      );
+      const desiredTarget = runnerWorldPos.clone().add(new THREE.Vector3(0, 1.1, 0));
+
       camera.position.lerp(desiredCamPos, 0.12);
       controls.target.lerp(desiredTarget, 0.12);
     }
@@ -3543,6 +4011,7 @@ function frame(now) {
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
+initAmbientTrackRunners();
 requestAnimationFrame(frame);
 </script>
 

@@ -255,12 +255,19 @@
 .run-steer-btn {
   background: var(--paper);
   color: var(--ink);
-  padding: 14px 22px;
-  font-size: 0.92rem;
+  padding: 12px 18px;
+  min-width: 50px;
+  height: 50px;
+  border-radius: 999px;
+  font-size: 1.25rem;
   font-weight: 900;
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 8px;
+}
+.run-steer-btn .icon {
+  font-size: 1.25rem;
+  line-height: 1;
 }
 .run-steer-btn:hover {
   background: var(--field);
@@ -909,28 +916,27 @@
     gap: 5px;
   }
   .run-steer-btn {
-    padding: 8px 10px;
+    padding: 0;
     min-width: 48px;
-    height: 54px;
+    width: 48px;
+    height: 52px;
     border-radius: 16px;
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 2px;
     box-shadow: 0 4px 14px rgba(17, 18, 34, 0.18);
   }
-  .run-steer-btn .icon { font-size: 1.05rem; }
-  .run-steer-btn span:not(.icon) { font-size: 0.65rem; font-weight: 900; }
+  .run-steer-btn .icon { font-size: 1.25rem; line-height: 1; }
   /* Turn buttons slightly subdued vs move buttons */
   #btnTurnLeft, #btnTurnRight {
     background: rgba(240, 240, 246, 0.96);
     min-width: 44px;
+    width: 44px;
     height: 48px;
     border-radius: 14px;
-    font-size: 0.75rem;
     opacity: 0.88;
   }
+  #btnTurnLeft .icon, #btnTurnRight .icon { font-size: 1.18rem; }
 
   .run-forward-btn {
     order: 2;
@@ -1304,13 +1310,11 @@ button:focus-visible, a:focus-visible, .pill:focus-visible { outline: 2px solid 
   <!-- 底部操控按鈕列 (支援桌面與手機人體工學佈局) -->
   <div class="run-bottom-controls">
     <div class="run-mobile-steer-dock">
-      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnTurnLeft" title="向左轉視角 (Q / 螢幕左側轉動)">
+      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnTurnLeft" title="向左轉視角 (Q / 螢幕左側轉動)" aria-label="向左轉視角">
         <span class="icon">↺</span>
-        <span>左轉</span>
       </button>
-      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnLeft" title="向左切換跑道 (A / ← / 螢幕向左滑動)">
+      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnLeft" title="向左切換跑道 (A / ← / 螢幕向左滑動)" aria-label="往左切換跑道">
         <span class="icon">◀</span>
-        <span>往左</span>
       </button>
     </div>
 
@@ -1321,13 +1325,11 @@ button:focus-visible, a:focus-visible, .pill:focus-visible { outline: 2px solid 
     </button>
 
     <div class="run-mobile-steer-dock">
-      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnRight" title="向右切換跑道 (D / → / 螢幕向右滑動)">
+      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnRight" title="向右切換跑道 (D / → / 螢幕向右滑動)" aria-label="往右切換跑道">
         <span class="icon">▶</span>
-        <span>往右</span>
       </button>
-      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnTurnRight" title="向右轉視角 (E / 螢幕右側轉動)">
+      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnTurnRight" title="向右轉視角 (E / 螢幕右側轉動)" aria-label="向右轉視角">
         <span class="icon">↻</span>
-        <span>右轉</span>
       </button>
     </div>
   </div>
@@ -2717,8 +2719,31 @@ function playFanfareSound() {
   } catch (e) {}
 }
 
-// 3D Player Character (Low arm swing + Jerry can carried at bottom in hand)
-const playerRunner = person(null, 1, 0.95, { top: teeMats, shorts: true, face: "smile" });
+// 主角跑者專屬運動帽子 (Unisex Running Cap)
+function addPlayerCap(p) {
+  const capGroup = new THREE.Group();
+  // 1. 帽冠 (Cap Crown)
+  const crownMat = flat("#ff5515", { roughness: 0.65 });
+  const crown = mesh(new THREE.SphereGeometry(0.208, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.54), crownMat, 0, 1.47, -0.01);
+  capGroup.add(crown);
+  // 2. 遮陽鴨舌帽簷 (Visor / Brim)
+  const visorMat = flat("#1e293b", { roughness: 0.55 });
+  const visor = mesh(new THREE.BoxGeometry(0.25, 0.024, 0.17), visorMat, 0, 1.455, 0.165);
+  visor.rotation.x = 0.12;
+  capGroup.add(visor);
+  // 3. 帽身白色 6K 大會徽章
+  const badge = mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.018, 10), flat("#ffffff"), 0, 1.54, 0.125);
+  badge.rotation.x = Math.PI / 2;
+  capGroup.add(badge);
+  // 4. 帽頂鈕扣
+  const button = mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.016, 8), flat("#1e293b"), 0, 1.62, -0.01);
+  capGroup.add(button);
+  p.g.add(capGroup);
+}
+
+// 3D Player Character (身材不分男女的健美跑者，戴著帽子)
+const playerRunner = person(null, 1, 0.94, { top: teeMats, shorts: true, face: "smile" });
+addPlayerCap(playerRunner);
 bib(playerRunner);
 const playerJerry = jerryCan(1.0);
 playerJerry.position.set(0, -0.68, 0);
@@ -2762,6 +2787,388 @@ function animateRunner(p, t, speed, carrying) {
 
     p.armL.rotation.set(0, 0, -0.08);
     p.armR.rotation.set(0, 0, carrying ? 0.18 : 0.08);
+  }
+}
+
+/* ---------- Ambient Track Runners (跑道半透明跑者系統) ---------- */
+// 隨機產生 男跑者, 女跑者, 男孩跑者, 女孩跑者; 出現比例 4:4:1:1
+// 跑步速度: 男跑者最快, 女跑者次之, 男孩跑者速度第三, 女孩跑者速度最後
+// 使用半透明配色, 持續產生往目的地前進, 跑過終點自然消失
+
+const AMBIENT_RUNNER_CONFIGS = {
+  male: {
+    type: "male",
+    scale: 0.95,
+    speedBase: 0.00067,
+    speedVar: 0.00007,
+    topColors: ["#2563eb", "#0284c7", "#ea580c", "#16a34a", "#4f46e5"],
+    pantsColors: ["#1e293b", "#0f172a", "#172554"],
+    skinColor: "#fed7aa",
+    hairColor: "#262626",
+    hasPonytail: false,
+    hasTwinTails: false,
+    targetOpacity: 0.70
+  },
+  female: {
+    type: "female",
+    scale: 0.90,
+    speedBase: 0.00053,
+    speedVar: 0.00006,
+    topColors: ["#db2777", "#f43f5e", "#8b5cf6", "#06b6d4", "#ec4899"],
+    pantsColors: ["#334155", "#475569", "#1e1b4b"],
+    skinColor: "#ffe4e6",
+    hairColor: "#332211",
+    hasPonytail: true,
+    hasTwinTails: false,
+    targetOpacity: 0.70
+  },
+  boy: {
+    type: "boy",
+    scale: 0.63,
+    speedBase: 0.00040,
+    speedVar: 0.00005,
+    topColors: ["#eab308", "#f97316", "#22c55e", "#0284c7"],
+    pantsColors: ["#1d4ed8", "#1e293b"],
+    skinColor: "#fed7aa",
+    hairColor: "#1f2937",
+    hasPonytail: false,
+    hasTwinTails: false,
+    targetOpacity: 0.72
+  },
+  girl: {
+    type: "girl",
+    scale: 0.58,
+    speedBase: 0.00030,
+    speedVar: 0.00004,
+    topColors: ["#f472b6", "#a855f7", "#34d399", "#fb7185"],
+    pantsColors: ["#6366f1", "#4f46e5"],
+    skinColor: "#ffe4e6",
+    hairColor: "#3b1e08",
+    hasPonytail: false,
+    hasTwinTails: true,
+    targetOpacity: 0.72
+  }
+};
+
+function pickAmbientRunnerType() {
+  const r = Math.random();
+  if (r < 0.40) return "male";    // 40% (4)
+  if (r < 0.80) return "female";  // 40% (4)
+  if (r < 0.90) return "boy";     // 10% (1)
+  return "girl";                  // 10% (1)
+}
+
+const ambientRunners = [];
+let ambientSpawnTimer = 0;
+const MAX_AMBIENT_RUNNERS = 28;
+
+function makeTranslucentMat(color, opacity = 0.70) {
+  return new THREE.MeshStandardMaterial({
+    color: color,
+    transparent: true,
+    opacity: opacity,
+    roughness: 0.55,
+    metalness: 0.08,
+    depthWrite: false
+  });
+}
+
+// 男女老少跑者活動衣服前後 Canvas 貼圖快取（快取紋理 Texture，材質 Material 每個跑者獨立）
+const ambientTeeTexCache = new Map();
+function getAmbientTeeTextures(colorHex) {
+  if (ambientTeeTexCache.has(colorHex)) return ambientTeeTexCache.get(colorHex);
+
+  // 正面活動衣服 (Front Tee: 活動標語 + 官方 G6K 標誌)
+  const frontTex = canvasTex(240, 300, (ctx, w, h) => {
+    ctx.fillStyle = colorHex;
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.beginPath();
+    ctx.roundRect(46, 68, 148, 22, 11);
+    ctx.fill();
+    ctx.fillStyle = colorHex;
+    ctx.font = '900 11.5px "Noto Sans TC", sans-serif';
+    ctx.textAlign = "center";
+    ctx.fillText("每步都是孩子的取水路", w / 2, 84);
+    g6kMark(ctx, w / 2, 136, 1.05);
+  });
+
+  // 背面活動衣服 (Back Tee: 官方 GLOBAL 6K FOR WATER 圓角外框與 6 城市名錄)
+  const backTex = canvasTex(240, 300, (ctx, w, h) => {
+    ctx.fillStyle = colorHex;
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.92)";
+    ctx.lineWidth = 5.5;
+    ctx.beginPath();
+    ctx.roundRect(70, 65, 100, 126, 16);
+    ctx.stroke();
+    g6kMark(ctx, w / 2, 115, 0.78);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.font = '700 9.5px Inter, sans-serif';
+    ctx.textAlign = "center";
+    ctx.fillText("SEOUL / BUSAN / TAIPEI / TOKYO", w / 2, 226);
+    ctx.fillText("SINGAPORE / HONG KONG", w / 2, 240);
+  });
+
+  const pair = { frontTex, backTex };
+  ambientTeeTexCache.set(colorHex, pair);
+  return pair;
+}
+
+function createAmbientRunner(type, initialU = 0.002, offset = 0, isInitial = false) {
+  const cfg = AMBIENT_RUNNER_CONFIGS[type];
+  const mats = [];
+  const addMat = mat => { mats.push(mat); return mat; };
+
+  const topColor = cfg.topColors[Math.floor(Math.random() * cfg.topColors.length)];
+  const pantsColor = cfg.pantsColors[Math.floor(Math.random() * cfg.pantsColors.length)];
+
+  const skinMat = addMat(makeTranslucentMat(cfg.skinColor, cfg.targetOpacity));
+  const topMat = addMat(makeTranslucentMat(topColor, cfg.targetOpacity));
+  const pantsMat = addMat(makeTranslucentMat(pantsColor, cfg.targetOpacity));
+  const hairMat = addMat(makeTranslucentMat(cfg.hairColor, cfg.targetOpacity));
+  const shoeMat = addMat(makeTranslucentMat("#f1f5f9", cfg.targetOpacity));
+  const bibMat = addMat(makeTranslucentMat("#ffffff", cfg.targetOpacity));
+
+  const g = new THREE.Group();
+  const root = new THREE.Group();
+  g.add(root);
+
+  // 軀幹 (每個跑者獨立材質實例，避免共用造成完賽淡出或銷毀時其他跑者衣服消失)
+  const { frontTex, backTex } = getAmbientTeeTextures(topColor);
+  const plainSide = addMat(makeTranslucentMat(topColor, cfg.targetOpacity));
+  const frontMat = addMat(new THREE.MeshStandardMaterial({
+    map: frontTex,
+    transparent: true,
+    opacity: cfg.targetOpacity,
+    roughness: 0.65,
+    depthWrite: false
+  }));
+  const backMat = addMat(new THREE.MeshStandardMaterial({
+    map: backTex,
+    transparent: true,
+    opacity: cfg.targetOpacity,
+    roughness: 0.65,
+    depthWrite: false
+  }));
+  const torsoMats = [plainSide, plainSide, plainSide, plainSide, frontMat, backMat];
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.52, 0.24), torsoMats);
+  torso.position.y = 0.94;
+  root.add(torso);
+
+  // 短袖袖子
+  const sleeveL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.18), topMat);
+  sleeveL.position.set(-0.28, 1.10, 0);
+  const sleeveR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.18), topMat);
+  sleeveR.position.set(0.28, 1.10, 0);
+  root.add(sleeveL, sleeveR);
+
+  // 號碼布 (略微下移，避免遮擋正面活動衣服圖片)
+  const bibMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.11), bibMat);
+  bibMesh.position.set(0, 0.77, 0.125);
+  root.add(bibMesh);
+
+  // 頭部
+  const head = new THREE.Mesh(new THREE.IcosahedronGeometry(0.18, 1), skinMat);
+  head.position.y = 1.42;
+  root.add(head);
+
+  // 頭髮
+  const hairBase = new THREE.Mesh(new THREE.IcosahedronGeometry(0.19, 1), hairMat);
+  hairBase.position.set(0, 1.47, -0.02);
+  hairBase.scale.set(1, 0.65, 1);
+  root.add(hairBase);
+
+  let ponytail = null;
+  const twinTails = [];
+
+  if (cfg.hasPonytail) {
+    // 女跑者馬尾
+    ponytail = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.02, 0.22, 6), hairMat);
+    ponytail.position.set(0, 1.48, -0.18);
+    ponytail.rotation.x = -0.55;
+    root.add(ponytail);
+  } else if (cfg.hasTwinTails) {
+    // 女孩跑者雙馬尾
+    [-1, 1].forEach(side => {
+      const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.012, 0.16, 5), hairMat);
+      tail.position.set(side * 0.16, 1.44, -0.07);
+      tail.rotation.set(-0.35, 0, side * 0.45);
+      root.add(tail);
+      twinTails.push(tail);
+    });
+  }
+
+  // 手臂
+  const makeArm = () => {
+    const armG = new THREE.Group();
+    const meshArm = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.058, 0.48, 6), skinMat);
+    meshArm.position.y = -0.24;
+    armG.add(meshArm);
+    return armG;
+  };
+  const armL = makeArm();
+  armL.position.set(-0.28, 1.15, 0);
+  const armR = makeArm();
+  armR.position.set(0.28, 1.15, 0);
+  root.add(armL, armR);
+
+  // 雙腿
+  const makeLeg = () => {
+    const legG = new THREE.Group();
+    const pantsPart = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.088, 0.24, 6), pantsMat);
+    pantsPart.position.y = -0.12;
+    const skinPart = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.06, 0.34, 6), skinMat);
+    skinPart.position.y = -0.38;
+    const footPart = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.07, 0.20), shoeMat);
+    footPart.position.set(0, -0.58, 0.03);
+    legG.add(pantsPart, skinPart, footPart);
+    return legG;
+  };
+  const legL = makeLeg();
+  legL.position.set(-0.12, 0.68, 0);
+  const legR = makeLeg();
+  legR.position.set(0.12, 0.68, 0);
+  root.add(legL, legR);
+
+  g.scale.setScalar(cfg.scale);
+
+  // 速度：男跑者最快，女跑者次之，男孩跑者第三，女孩跑者最後
+  const speed = cfg.speedBase + Math.random() * cfg.speedVar;
+
+  const runner = {
+    g,
+    root,
+    legL,
+    legR,
+    armL,
+    armR,
+    ponytail,
+    twinTails,
+    materials: mats,
+    cfg,
+    type,
+    speed,
+    u: initialU,
+    offset: offset !== 0 ? offset : (Math.random() - 0.5) * 1.05,
+    stepCycle: Math.random() * Math.PI * 2,
+    targetOpacity: cfg.targetOpacity,
+    currentOpacity: isInitial ? cfg.targetOpacity : 0.0,
+    isSpawning: !isInitial,
+    isFinishing: false
+  };
+
+  setAmbientRunnerOpacity(runner, runner.currentOpacity);
+  updateAmbientRunnerTransform(runner);
+  scene.add(g);
+  return runner;
+}
+
+function setAmbientRunnerOpacity(runner, op) {
+  runner.currentOpacity = Math.max(0, op);
+  const ratio = Math.max(0, Math.min(1, runner.currentOpacity / runner.targetOpacity));
+  for (let i = 0; i < runner.materials.length; i++) {
+    runner.materials[i].opacity = runner.cfg.targetOpacity * ratio;
+  }
+}
+
+function updateAmbientRunnerTransform(runner) {
+  const clampedU = Math.max(0.001, Math.min(0.999, runner.u));
+  const p = route.getPointAt(clampedU);
+  const tg = route.getTangentAt(clampedU);
+  const nrm = new THREE.Vector3(tg.z, 0, -tg.x);
+  runner.g.position.copy(p).addScaledVector(nrm, runner.offset);
+  runner.g.position.y = 0.02;
+  runner.g.rotation.y = Math.atan2(tg.x, tg.z);
+}
+
+function disposeAmbientRunner(runner) {
+  scene.remove(runner.g);
+}
+
+function updateAmbientTrackRunners(dt) {
+  // 1. 持續產生新跑者（按 4:4:1:1 隨機產生男跑者、女跑者、男孩跑者、女孩跑者）
+  ambientSpawnTimer += dt;
+  if (ambientSpawnTimer >= 1.6 && ambientRunners.length < MAX_AMBIENT_RUNNERS) {
+    ambientSpawnTimer = 0;
+    const type = pickAmbientRunnerType();
+    const laneOffset = (Math.random() - 0.5) * 1.05;
+    const newRunner = createAmbientRunner(type, 0.002, laneOffset, false);
+    ambientRunners.push(newRunner);
+  }
+
+  // 2. 更新跑者位置、跑步步態與衝線自然消失
+  for (let i = ambientRunners.length - 1; i >= 0; i--) {
+    const runner = ambientRunners[i];
+
+    // 新出生跑者淡入
+    if (runner.isSpawning) {
+      runner.currentOpacity += dt * 1.6;
+      if (runner.currentOpacity >= runner.targetOpacity) {
+        runner.currentOpacity = runner.targetOpacity;
+        runner.isSpawning = false;
+      }
+      setAmbientRunnerOpacity(runner, runner.currentOpacity);
+    }
+
+    // 依各自速度持續向前推進
+    const moveDelta = runner.speed * (dt * 60);
+    runner.u += moveDelta;
+    runner.stepCycle += moveDelta * 260;
+
+    // 肢體跑步擺動動畫
+    const legAmp = 0.85;
+    const armAmp = 0.45;
+    runner.legL.rotation.x = Math.sin(runner.stepCycle) * legAmp;
+    runner.legR.rotation.x = -Math.sin(runner.stepCycle) * legAmp;
+    runner.armL.rotation.x = -Math.sin(runner.stepCycle) * armAmp;
+    runner.armR.rotation.x = Math.sin(runner.stepCycle) * armAmp;
+    runner.armL.rotation.z = -0.12;
+    runner.armR.rotation.z = 0.12;
+
+    // 奔跑微幅上下起伏與身體微前傾
+    runner.root.position.y = 0.02 + Math.abs(Math.sin(runner.stepCycle)) * 0.04;
+    runner.root.rotation.x = 0.12;
+
+    // 馬尾隨步伐起伏
+    if (runner.ponytail) {
+      runner.ponytail.rotation.x = -0.55 + Math.sin(runner.stepCycle * 2) * 0.14;
+    }
+    if (runner.twinTails && runner.twinTails.length > 0) {
+      runner.twinTails.forEach((tail, idx) => {
+        tail.rotation.x = -0.35 + Math.sin(runner.stepCycle * 2 + idx) * 0.12;
+      });
+    }
+
+    // 更新 3D 空間坐標
+    updateAmbientRunnerTransform(runner);
+
+    // 跑過終點（u >= 0.975）自然消失
+    if (runner.u >= 0.975) {
+      runner.isFinishing = true;
+    }
+
+    if (runner.isFinishing) {
+      runner.currentOpacity -= dt * 1.4;
+      setAmbientRunnerOpacity(runner, runner.currentOpacity);
+
+      if (runner.currentOpacity <= 0 || runner.u >= 1.0) {
+        disposeAmbientRunner(runner);
+        ambientRunners.splice(i, 1);
+      }
+    }
+  }
+}
+
+function initAmbientTrackRunners() {
+  // 賽道全線預先生成跑者，均勻分佈在 0.04 ~ 0.94
+  const count = 20;
+  for (let i = 0; i < count; i++) {
+    const type = pickAmbientRunnerType();
+    const u = 0.04 + (i / count) * 0.90 + (Math.random() - 0.5) * 0.03;
+    const offset = (Math.random() - 0.5) * 1.05;
+    const runner = createAmbientRunner(type, Math.max(0.01, Math.min(0.96, u)), offset, true);
+    ambientRunners.push(runner);
   }
 }
 
@@ -2846,6 +3253,7 @@ let currentCertDataUrl = "";
 let toastTimer = null;
 
 function setRunMode(active) {
+  window.__setRunMode = setRunMode;
   isRunMode = active;
   btnRunMode.setAttribute("aria-pressed", String(active));
   btnRunMode.classList.toggle("active", active);
@@ -2939,10 +3347,14 @@ btnToggleAuto.onclick = () => {
   document.getElementById("autoStatus").textContent = isAutoRunning ? "開啟" : "關";
 };
 
+const PLAYER_CRUISE_SPEED = 0.00063; // 巡航速度：男跑者(~0.00070)與女跑者(~0.00056)中間
+const PLAYER_MAX_SPRINT_SPEED = 0.00095; // 快速按時最高衝刺速度（超越男跑者 0.00074）
+
 function stepForward() {
   if (isFinished) return;
   getAudioCtx();
-  runnerSpeed = Math.min(runnerSpeed + 0.0035, 0.0075);
+  // 快速按時每次疊加速度，可超越男跑者的速度
+  runnerSpeed = Math.min(Math.max(runnerSpeed, PLAYER_CRUISE_SPEED) + 0.00009, PLAYER_MAX_SPRINT_SPEED);
   stepCycle += 1.8;
   animateRunner(playerRunner, stepCycle, runnerSpeed, isCarryingJerry);
   playStepSound();
@@ -3556,7 +3968,13 @@ function updateRunHUD() {
 const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const tmp = new THREE.Vector3();
 anim.forEach(f => f(0));
+
+let lastAmbientFrameTime = performance.now();
 function frame(now) {
+  const dt = Math.min(Math.max((now - lastAmbientFrameTime) / 1000, 0.001), 0.1);
+  lastAmbientFrameTime = now;
+  updateAmbientTrackRunners(dt);
+
   const s = now / 1000;
   if (tween) {
     const k = Math.min((now - tween.t0) / tween.ms, 1), e = ease(k);
@@ -3570,9 +3988,14 @@ function frame(now) {
   if (isRunMode) {
     let targetSpeed = 0.0;
     if (isAutoRunning || isHoldingForward) {
-      targetSpeed = isHoldingForward ? 0.0035 : 0.0022;
+      targetSpeed = PLAYER_CRUISE_SPEED;
     }
-    runnerSpeed += (targetSpeed - runnerSpeed) * 0.15;
+    if (runnerSpeed > targetSpeed) {
+      // 快速按所獲得的衝刺速度，平滑緩慢衰減回巡航速度，讓玩家持續超車
+      runnerSpeed += (targetSpeed - runnerSpeed) * 0.038;
+    } else {
+      runnerSpeed += (targetSpeed - runnerSpeed) * 0.15;
+    }
 
     if (isHoldingLeft) runnerOffset = Math.min(runnerOffset + 0.024, 0.65);
     if (isHoldingRight) runnerOffset = Math.max(runnerOffset - 0.024, -0.65);
@@ -3670,6 +4093,7 @@ function frame(now) {
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
+initAmbientTrackRunners();
 requestAnimationFrame(frame);
 </script>
 
