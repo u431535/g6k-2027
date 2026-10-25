@@ -381,26 +381,31 @@
   font-variant-numeric: tabular-nums;
 }
 .finish-desc {
-  font-size: 0.85rem;
-  line-height: 1.6;
-  color: var(--muted);
-  text-align: left;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink);
+  text-align: center;
   background: #fdfaf6;
   border-left: 4px solid var(--orange);
-  padding: 10px 14px;
-  border-radius: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
 }
-.finish-desc p {
-  margin: 0 0 6px;
+.finish-highlight {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--orange-deep);
+  margin: 0 0 4px;
 }
-.finish-desc p:last-child {
+.finish-invitation {
+  font-size: 0.82rem;
+  color: var(--muted);
   margin: 0;
 }
 .finish-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 .finish-btn {
   border: 0;
@@ -428,11 +433,14 @@
 }
 .finish-btn-signup {
   grid-column: span 2;
-  background: var(--orange);
+  background: linear-gradient(135deg, #ff5515 0%, #e32c13 100%);
   color: #fff;
+  font-size: 1.05rem;
+  padding: 14px;
+  box-shadow: 0 4px 14px rgba(255, 85, 21, 0.35);
 }
 .finish-btn-signup:hover {
-  background: var(--orange-deep);
+  background: linear-gradient(135deg, #f04808 0%, #cb220b 100%);
 }
 
 
@@ -1168,7 +1176,7 @@ button:focus-visible, a:focus-visible, .pill:focus-visible { outline: 2px solid 
     <div class="finish-header">
       <div class="finish-trophy">🏆</div>
       <h2>恭喜完賽！完成 6KM 取水之路！</h2>
-      <p class="finish-sub">你跑過的每一步，都是缺水地區孩子每天的艱辛日常</p>
+      <p class="finish-sub">你的一小步，是缺水孩童的一大希望！</p>
     </div>
     <div class="finish-stats">
       <div class="finish-stat-box">
@@ -1188,15 +1196,14 @@ button:focus-visible, a:focus-visible, .pill:focus-visible { outline: 2px solid 
         <strong>20 <span style="font-size:0.8rem">公升</span></strong>
       </div>
     </div>
-    <div id="finishGroupKudos" class="finish-group-kudos"></div>
     <div class="finish-desc">
-      <p>在全球缺水角落，每天有超過 7 億人缺乏乾淨飲用水，孩子和婦女平均每天要徒步 6 公里取水。感謝你親自體驗取水之路！</p>
-      <p><b>2027 年 3 月 27 日（六）台北大佳河濱公園</b>，世界展望會邀請您與家人朋友齊聚現場，一起扛起水桶、穿上跑衣，為孩子跑出希望！</p>
+      <p id="finishGroupKudos" class="finish-highlight"></p>
+      <p class="finish-invitation"><b>2027/3/27 台北大佳河濱</b> · 邀請您加入實體路跑，為孩子跑出希望！</p>
     </div>
     <div class="finish-actions">
+      <a class="finish-btn finish-btn-signup" href="https://www.worldvision.org.tw/articles/302" target="_blank" rel="noopener">🏃 立即報名實體路跑 ↗</a>
       <button type="button" class="finish-btn finish-btn-replay" id="btnReplayRun">🔄 再跑一次</button>
-      <button type="button" class="finish-btn finish-btn-overview" id="btnFinishOverview">🔍 返回全景探索</button>
-      <a class="finish-btn finish-btn-signup" href="https://www.worldvision.org.tw/articles/302" target="_blank" rel="noopener">立即報名實體路跑 ↗</a>
+      <button type="button" class="finish-btn finish-btn-overview" id="btnFinishOverview">🔍 全景導覽</button>
     </div>
   </div>
 </div>
@@ -2897,8 +2904,8 @@ function triggerFinish() {
   const finishKudos = document.getElementById("finishGroupKudos");
   if (finishKudos) {
     finishKudos.innerHTML = isCarryingJerry
-      ? "<b>💪 負重完賽勇士：</b>恭喜你單手手持 20 公升黃色水桶完成 6KM，深入同理孩童每日負重長征的艱難！"
-      : "<b>🏃 體驗完賽認證：</b>恭喜你以輕盈堅毅的腳步完成 6KM，用雙腳為遠方的缺水孩童注入甘霖！";
+      ? "💪 <b>負重完賽！</b>成功手持 20L 水桶跑完全程，深刻同理孩童的辛苦！"
+      : "🏃 <b>體驗完賽！</b>以輕盈堅毅腳步完成 6KM，為孩童帶來乾淨水源！";
   }
 
   // Rotate camera to front view of runner

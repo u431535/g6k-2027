@@ -381,26 +381,31 @@
   font-variant-numeric: tabular-nums;
 }
 .finish-desc {
-  font-size: 0.85rem;
-  line-height: 1.6;
-  color: var(--muted);
-  text-align: left;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink);
+  text-align: center;
   background: #fdfaf6;
   border-left: 4px solid var(--orange);
-  padding: 10px 14px;
-  border-radius: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
 }
-.finish-desc p {
-  margin: 0 0 6px;
+.finish-highlight {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--orange-deep);
+  margin: 0 0 4px;
 }
-.finish-desc p:last-child {
+.finish-invitation {
+  font-size: 0.82rem;
+  color: var(--muted);
   margin: 0;
 }
 .finish-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 .finish-btn {
   border: 0;
@@ -428,11 +433,14 @@
 }
 .finish-btn-signup {
   grid-column: span 2;
-  background: var(--orange);
+  background: linear-gradient(135deg, #ff5515 0%, #e32c13 100%);
   color: #fff;
+  font-size: 1.05rem;
+  padding: 14px;
+  box-shadow: 0 4px 14px rgba(255, 85, 21, 0.35);
 }
 .finish-btn-signup:hover {
-  background: var(--orange-deep);
+  background: linear-gradient(135deg, #f04808 0%, #cb220b 100%);
 }
 
 
@@ -1165,7 +1173,7 @@ button:focus-visible, a:focus-visible, .pill:focus-visible { outline: 2px solid 
     <div class="finish-header">
       <div class="finish-trophy">🏆</div>
       <h2>Congratulations! 6KM Route Completed!</h2>
-      <p class="finish-sub">Every step you ran reflects the daily journey of children in water-scarce regions.</p>
+      <p class="finish-sub">Every step brings clean water and hope!</p>
     </div>
     <div class="finish-stats">
       <div class="finish-stat-box">
@@ -1185,15 +1193,14 @@ button:focus-visible, a:focus-visible, .pill:focus-visible { outline: 2px solid 
         <strong>20 <span style="font-size:0.8rem">L</span></strong>
       </div>
     </div>
-    <div id="finishGroupKudos" class="finish-group-kudos"></div>
     <div class="finish-desc">
-      <p>Around the world, over 700 million people lack access to clean water. Women and children walk an average of 6 km daily to fetch water. Thank you for walking in their footsteps!</p>
-      <p><b>March 27, 2027 (Sat) at Dajia Riverside Park, Taipei</b>. Join us in person, carry a jerry can, and run for clean water!</p>
+      <p id="finishGroupKudos" class="finish-highlight"></p>
+      <p class="finish-invitation"><b>March 27, 2027 · Taipei</b> Join our physical run!</p>
     </div>
     <div class="finish-actions">
+      <a class="finish-btn finish-btn-signup" href="https://www.worldvision.org.tw/articles/302" target="_blank" rel="noopener">🏃 Sign Up for Physical Run ↗</a>
       <button type="button" class="finish-btn finish-btn-replay" id="btnReplayRun">🔄 Run Again</button>
-      <button type="button" class="finish-btn finish-btn-overview" id="btnFinishOverview">🔍 Overview Mode</button>
-      <a class="finish-btn finish-btn-signup" href="https://www.worldvision.org.tw/articles/302" target="_blank" rel="noopener">Register for Race ↗</a>
+      <button type="button" class="finish-btn finish-btn-overview" id="btnFinishOverview">🔍 Overview</button>
     </div>
   </div>
 </div>
@@ -2870,8 +2877,8 @@ function triggerFinish() {
   const finishKudos = document.getElementById("finishGroupKudos");
   if (finishKudos) {
     finishKudos.innerHTML = isCarryingJerry
-      ? "<b>💪 Heavy Load Warrior:</b> You completed 6KM while carrying a 20L Jerry can, truly empathizing with children's arduous water-fetching journeys!"
-      : "<b>🏃 Finisher Honor:</b> You completed 6KM with steady strides, bringing clean water and life-changing hope to children in need!";
+      ? "💪 <b>Heavy Load Warrior!</b> You carried a 20L Jerry can across 6KM!"
+      : "🏃 <b>Finisher Honor!</b> You completed 6KM, bringing hope for clean water!";
   }
 
   const p = route.getPointAt(runnerU);
