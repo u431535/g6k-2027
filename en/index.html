@@ -647,14 +647,15 @@
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 6px;
-  font-size: 0.8rem;
+  gap: 8px;
+  font-size: 0.92rem;
   color: var(--ink);
 }
 .group-features li {
   display: flex;
   align-items: center;
   gap: 8px;
+  line-height: 1.4;
 }
 .group-choose-btn {
   border: 0;
@@ -815,17 +816,23 @@
 
   /* Group Select Modal on Mobile */
   .group-select-dialog {
-    padding: 24px 16px 20px;
-    max-height: 90vh;
+    padding: 20px 14px 18px;
+    max-height: 92vh;
     overflow-y: auto;
   }
-  .group-select-header h2 { font-size: 1.3rem; }
+  .group-select-header h2 { font-size: 1.35rem; }
+  .group-select-subtitle { font-size: 0.85rem; }
   .group-options-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 14px;
   }
-  .group-card { padding: 16px 14px; gap: 10px; }
-  .group-popular-tag { top: -10px; right: 12px; font-size: 0.62rem; }
+  .group-card { padding: 16px 14px; gap: 12px; }
+  .group-popular-tag { top: -10px; right: 12px; font-size: 0.65rem; }
+  .group-name { font-size: 1.3rem; }
+  .group-price { font-size: 0.85rem; }
+  .group-features { font-size: 1rem; gap: 10px; }
+  .group-choose-btn { font-size: 1rem; padding: 14px 16px; }
+  .group-icon-wrap { width: 46px; height: 46px; font-size: 1.6rem; }
 
   .finish-stats { grid-template-columns: 1fr 1fr; }
   .finish-dialog { padding: 20px 16px; }
@@ -1059,13 +1066,9 @@ button:focus-visible, a:focus-visible, .pill:focus-visible { outline: 2px solid 
           </div>
         </div>
         <div class="group-card-body">
-          <div class="group-visual-preview">
-            <span class="preview-badge">✨ Free Hands · Natural Arm Swing</span>
-            <p class="preview-desc">Run with free hands and a natural stride, feeling the realistic distance children walk daily for clean water.</p>
-          </div>
           <ul class="group-features">
-            <li><span>🏃</span> Free hands without load, smooth and agile pace</li>
-            <li><span>💧</span> Empathize with children's daily 6K walking distance</li>
+            <li><span>🏃</span> Free hands, natural arm swing</li>
+            <li><span>💧</span> Empathize with children's daily water walk</li>
             <li><span>🏅</span> Earn the 2027 Virtual Finisher Badge</li>
           </ul>
         </div>
@@ -1089,14 +1092,10 @@ button:focus-visible, a:focus-visible, .pill:focus-visible { outline: 2px solid 
           </div>
         </div>
         <div class="group-card-body">
-          <div class="group-visual-preview heavy-preview">
-            <span class="preview-badge heavy-badge">🪣 Carrying 20L Yellow Jerry Can</span>
-            <p class="preview-desc">Hold a 20-liter yellow Jerry can in hand, truly experiencing the hardship of children carrying heavy water across rough terrain.</p>
-          </div>
           <ul class="group-features">
-            <li><span>🪣</span> Carry a 20L yellow Jerry can in hand (as shown in photo)</li>
-            <li><span>💪</span> Realistic weighted running posture and arm animation</li>
-            <li><span>🏆</span> Earn the exclusive "Heavy Load Finisher Warrior" honor</li>
+            <li><span>🪣</span> Carry a 20L Yellow Jerry Can</li>
+            <li><span>💪</span> Weighted run, immersive experience</li>
+            <li><span>🏆</span> Earn the "Heavy Load Finisher Warrior" honor</li>
           </ul>
         </div>
         <button type="button" class="group-choose-btn heavy-btn" id="btnChooseHeavy">

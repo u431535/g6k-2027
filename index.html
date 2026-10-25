@@ -647,14 +647,15 @@
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 6px;
-  font-size: 0.8rem;
+  gap: 8px;
+  font-size: 0.92rem;
   color: var(--ink);
 }
 .group-features li {
   display: flex;
   align-items: center;
   gap: 8px;
+  line-height: 1.4;
 }
 .group-choose-btn {
   border: 0;
@@ -815,17 +816,23 @@
 
   /* Group Select Modal on Mobile */
   .group-select-dialog {
-    padding: 24px 16px 20px;
-    max-height: 90vh;
+    padding: 20px 14px 18px;
+    max-height: 92vh;
     overflow-y: auto;
   }
-  .group-select-header h2 { font-size: 1.3rem; }
+  .group-select-header h2 { font-size: 1.35rem; }
+  .group-select-subtitle { font-size: 0.85rem; }
   .group-options-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 14px;
   }
-  .group-card { padding: 16px 14px; gap: 10px; }
-  .group-popular-tag { top: -10px; right: 12px; font-size: 0.62rem; }
+  .group-card { padding: 16px 14px; gap: 12px; }
+  .group-popular-tag { top: -10px; right: 12px; font-size: 0.65rem; }
+  .group-name { font-size: 1.3rem; }
+  .group-price { font-size: 0.85rem; }
+  .group-features { font-size: 1rem; gap: 10px; }
+  .group-choose-btn { font-size: 1rem; padding: 14px 16px; }
+  .group-icon-wrap { width: 46px; height: 46px; font-size: 1.6rem; }
 
   .finish-stats { grid-template-columns: 1fr 1fr; }
   .finish-dialog { padding: 20px 16px; }
@@ -1059,14 +1066,10 @@ button:focus-visible, a:focus-visible, .pill:focus-visible { outline: 2px solid 
           </div>
         </div>
         <div class="group-card-body">
-          <div class="group-visual-preview">
-            <span class="preview-badge">✨ 雙手放空・自然擺臂奔跑</span>
-            <p class="preview-desc">雙手保持放空自由擺臂，以最輕鬆靈活的節奏體驗 6 公里取水之路，感受孩童每日步行的真實距離。</p>
-          </div>
           <ul class="group-features">
-            <li><span>🏃</span> 雙手無負重、步伐暢快自然擺動</li>
-            <li><span>💧</span> 象徵同理孩童徒步尋找乾淨水源</li>
-            <li><span>🏅</span> 完賽獲得 2027 榮譽線上完賽認證</li>
+            <li><span>🏃</span> 雙手放空，自然擺臂奔跑</li>
+            <li><span>💧</span> 同理孩童每日取水之路</li>
+            <li><span>🏅</span> 完賽獲得線上完賽認證</li>
           </ul>
         </div>
         <button type="button" class="group-choose-btn standard-btn" id="btnChooseStandard">
@@ -1089,14 +1092,10 @@ button:focus-visible, a:focus-visible, .pill:focus-visible { outline: 2px solid 
           </div>
         </div>
         <div class="group-card-body">
-          <div class="group-visual-preview heavy-preview">
-            <span class="preview-badge heavy-badge">🪣 一手提著黃色水桶 (Jerry Can)</span>
-            <p class="preview-desc">手持裝滿 20 公升飲用水的黃色水桶，真實體會偏鄉孩童每天提著水桶走過漫漫荒野長途取水的辛酸！</p>
-          </div>
           <ul class="group-features">
-            <li><span>🪣</span> 一手拿著象徵 20 公升的黃色水桶</li>
-            <li><span>💪</span> 真實單手負重跑步姿勢與沉浸體驗</li>
-            <li><span>🏆</span> 完賽獲得專屬「負重完賽勇士」認證</li>
+            <li><span>🪣</span> 單手提著黃色水桶 (Jerry Can)</li>
+            <li><span>💪</span> 負重跑步，沉浸式體驗</li>
+            <li><span>🏆</span> 完賽獲得「負重完賽勇士」認證</li>
           </ul>
         </div>
         <button type="button" class="group-choose-btn heavy-btn" id="btnChooseHeavy">
