@@ -1,0 +1,17 @@
+{
+  "name": "g6k-2027",
+  "version": "1.0.0",
+  "description": "2027 Global 6K For Water 互動導覽與線上跑步系統",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "world-vision",
+    "global-6k",
+    "threejs",
+    "virtual-run"
+  ],
+  "author": "World Vision Taiwan",
+  "license": "MIT"
+}
