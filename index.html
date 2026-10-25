@@ -700,9 +700,17 @@
 .run-mobile-steer-dock {
   display: contents;
 }
-#btnLeft { order: 1; }
-#btnForward { order: 2; }
-#btnRight { order: 3; }
+#btnTurnLeft { order: 1; }
+#btnLeft     { order: 2; }
+#btnForward  { order: 3; }
+#btnRight    { order: 4; }
+#btnTurnRight{ order: 5; }
+.run-turn-btn {
+  background: rgba(255,255,255,0.85);
+  color: var(--ink);
+  font-size: 0.82rem;
+  opacity: 0.85;
+}
 .mobile-hint { display: none; }
 .desktop-hint { display: block; }
 .run-group-badge-hud {
@@ -765,29 +773,37 @@
   .run-mobile-steer-dock {
     display: flex;
     flex-direction: row;
-    gap: 8px;
-    order: 1;
+    gap: 5px;
   }
   .run-steer-btn {
-    padding: 10px 12px;
-    min-width: 56px;
-    height: 56px;
-    border-radius: 18px;
+    padding: 8px 10px;
+    min-width: 48px;
+    height: 54px;
+    border-radius: 16px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 2px;
-    box-shadow: 0 6px 18px rgba(17, 18, 34, 0.22);
+    box-shadow: 0 4px 14px rgba(17, 18, 34, 0.18);
   }
-  .run-steer-btn .icon { font-size: 1.15rem; }
-  .run-steer-btn span:not(.icon) { font-size: 0.72rem; font-weight: 900; }
+  .run-steer-btn .icon { font-size: 1.05rem; }
+  .run-steer-btn span:not(.icon) { font-size: 0.65rem; font-weight: 900; }
+  /* Turn buttons slightly subdued vs move buttons */
+  #btnTurnLeft, #btnTurnRight {
+    background: rgba(240, 240, 246, 0.96);
+    min-width: 44px;
+    height: 48px;
+    border-radius: 14px;
+    font-size: 0.75rem;
+    opacity: 0.88;
+  }
 
   .run-forward-btn {
     order: 2;
-    min-width: 136px;
-    height: 56px;
-    padding: 6px 16px;
+    min-width: 120px;
+    height: 54px;
+    padding: 6px 14px;
     border-radius: 20px;
     display: flex;
     flex-direction: column;
@@ -797,8 +813,8 @@
     box-shadow: 0 8px 24px rgba(255, 85, 21, 0.55);
   }
   .run-forward-btn .icon { font-size: 1.2rem; }
-  .run-forward-btn .text { font-size: 0.92rem; font-weight: 900; }
-  .run-forward-btn .sub { font-size: 0.6rem; opacity: 0.85; }
+  .run-forward-btn .text { font-size: 0.88rem; font-weight: 900; }
+  .run-forward-btn .sub { font-size: 0.58rem; opacity: 0.85; }
 
   .desktop-hint { display: none; }
   .mobile-hint {
@@ -1149,14 +1165,13 @@ button:focus-visible, a:focus-visible, .pill:focus-visible { outline: 2px solid 
   <!-- 底部操控按鈕列 (支援桌面與手機人體工學佈局) -->
   <div class="run-bottom-controls">
     <div class="run-mobile-steer-dock">
+      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnTurnLeft" title="向左轉視角 (Q / 螢幕左側轉動)">
+        <span class="icon">↺</span>
+        <span>左轉</span>
+      </button>
       <button type="button" class="run-ctrl-btn run-steer-btn" id="btnLeft" title="向左切換跑道 (A / ← / 螢幕向左滑動)">
         <span class="icon">◀</span>
         <span>往左</span>
-      </button>
-
-      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnRight" title="向右切換跑道 (D / → / 螢幕向右滑動)">
-        <span class="icon">▶</span>
-        <span>往右</span>
       </button>
     </div>
 
@@ -1165,6 +1180,17 @@ button:focus-visible, a:focus-visible, .pill:focus-visible { outline: 2px solid 
       <span class="text">往前跑</span>
       <span class="sub">按住持續奔跑</span>
     </button>
+
+    <div class="run-mobile-steer-dock">
+      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnRight" title="向右切換跑道 (D / → / 螢幕向右滑動)">
+        <span class="icon">▶</span>
+        <span>往右</span>
+      </button>
+      <button type="button" class="run-ctrl-btn run-steer-btn" id="btnTurnRight" title="向右轉視角 (E / 螢幕右側轉動)">
+        <span class="icon">↻</span>
+        <span>右轉</span>
+      </button>
+    </div>
   </div>
 
 </div>
@@ -2456,6 +2482,9 @@ let isAutoRunning = false;
 let isHoldingForward = false;
 let isHoldingLeft = false;
 let isHoldingRight = false;
+let isHoldingTurnLeft = false;
+let isHoldingTurnRight = false;
+let cameraYawOffset = 0.0;  // extra yaw for look-left/look-right
 let runStartTime = 0;
 let lastAnnouncedStation = -1;
 let isFinished = false;
@@ -2640,6 +2669,8 @@ const btnExitRun = document.getElementById("btnExitRun");
 const btnForward = document.getElementById("btnForward");
 const btnLeft = document.getElementById("btnLeft");
 const btnRight = document.getElementById("btnRight");
+const btnTurnLeft = document.getElementById("btnTurnLeft");
+const btnTurnRight = document.getElementById("btnTurnRight");
 const btnReplayRun = document.getElementById("btnReplayRun");
 const btnFinishOverview = document.getElementById("btnFinishOverview");
 // stationAlert removed
@@ -2679,6 +2710,9 @@ function setRunMode(active) {
     isHoldingForward = false;
     isHoldingLeft = false;
     isHoldingRight = false;
+    isHoldingTurnLeft = false;
+    isHoldingTurnRight = false;
+    cameraYawOffset = 0.0;
     isAutoRunning = false;
     btnToggleAuto.classList.remove("active");
     document.getElementById("autoStatus").textContent = "關";
@@ -2758,6 +2792,14 @@ btnRight.addEventListener("pointerdown", e => { e.preventDefault(); isHoldingRig
 btnRight.addEventListener("pointerup", e => { e.preventDefault(); isHoldingRight = false; });
 btnRight.addEventListener("pointerleave", () => { isHoldingRight = false; });
 
+btnTurnLeft.addEventListener("pointerdown", e => { e.preventDefault(); isHoldingTurnLeft = true; getAudioCtx(); });
+btnTurnLeft.addEventListener("pointerup", e => { e.preventDefault(); isHoldingTurnLeft = false; });
+btnTurnLeft.addEventListener("pointerleave", () => { isHoldingTurnLeft = false; });
+
+btnTurnRight.addEventListener("pointerdown", e => { e.preventDefault(); isHoldingTurnRight = true; getAudioCtx(); });
+btnTurnRight.addEventListener("pointerup", e => { e.preventDefault(); isHoldingTurnRight = false; });
+btnTurnRight.addEventListener("pointerleave", () => { isHoldingTurnRight = false; });
+
 // Canvas click also propels runner in run mode
 renderer.domElement.addEventListener("click", () => {
   if (isRunMode && !isFinished) {
@@ -2783,6 +2825,12 @@ addEventListener("keydown", e => {
   if (e.key === "d" || e.key === "D" || e.key === "ArrowRight") {
     isHoldingRight = true;
   }
+  if (e.key === "q" || e.key === "Q") {
+    isHoldingTurnLeft = true;
+  }
+  if (e.key === "e" || e.key === "E") {
+    isHoldingTurnRight = true;
+  }
 });
 addEventListener("keyup", e => {
   if (!isRunMode) return;
@@ -2794,6 +2842,12 @@ addEventListener("keyup", e => {
   }
   if (e.key === "d" || e.key === "D" || e.key === "ArrowRight") {
     isHoldingRight = false;
+  }
+  if (e.key === "q" || e.key === "Q") {
+    isHoldingTurnLeft = false;
+  }
+  if (e.key === "e" || e.key === "E") {
+    isHoldingTurnRight = false;
   }
 });
 
@@ -2835,7 +2889,7 @@ window.addEventListener("touchmove", (e) => {
   const deltaX = touch.clientX - touchStartX;
 
   if (Math.abs(deltaX) > 16) {
-    if (deltaX < 0) {
+    if (deltaX > 0) {
       isHoldingLeft = true;
       isHoldingRight = false;
     } else {
@@ -2926,7 +2980,8 @@ function updateRunnerTransform() {
   playerRunner.g.position.y = 0.02;
 
   const yaw = Math.atan2(tg.x, tg.z);
-  playerRunner.g.rotation.y = yaw + (isHoldingLeft ? -0.18 : (isHoldingRight ? 0.18 : 0));
+  // Body leans in direction of movement: left = positive offset = lean right visually (+yaw), right = lean left (-yaw)
+  playerRunner.g.rotation.y = yaw + (isHoldingLeft ? 0.18 : (isHoldingRight ? -0.18 : 0));
 }
 
 function updateRunHUD() {
@@ -2993,8 +3048,8 @@ function frame(now) {
     }
     runnerSpeed += (targetSpeed - runnerSpeed) * 0.15;
 
-    if (isHoldingLeft) runnerOffset = Math.max(runnerOffset - 0.024, -0.65);
-    if (isHoldingRight) runnerOffset = Math.min(runnerOffset + 0.024, 0.65);
+    if (isHoldingLeft) runnerOffset = Math.min(runnerOffset + 0.024, 0.65);
+    if (isHoldingRight) runnerOffset = Math.max(runnerOffset - 0.024, -0.65);
     runnerOffset *= 0.985;
 
     if (runnerSpeed > 0.0001 && !isFinished) {
@@ -3022,7 +3077,22 @@ function frame(now) {
       const tg = route.getTangentAt(runnerU);
       const camDist = 4.2;
       const camHeight = 1.95;
-      const desiredCamPos = p.clone().sub(tg.clone().multiplyScalar(camDist)).add(new THREE.Vector3(0, camHeight, 0));
+
+      // Update camera yaw offset for turn left/right
+      if (isHoldingTurnLeft)  cameraYawOffset = Math.max(cameraYawOffset - 0.025, -Math.PI * 0.6);
+      if (isHoldingTurnRight) cameraYawOffset = Math.min(cameraYawOffset + 0.025,  Math.PI * 0.6);
+      // Spring back to center when not turning
+      if (!isHoldingTurnLeft && !isHoldingTurnRight) cameraYawOffset *= 0.92;
+
+      // Rotate the behind-camera position by cameraYawOffset around the runner
+      const baseDir = tg.clone().multiplyScalar(-camDist);
+      const cosY = Math.cos(cameraYawOffset), sinY = Math.sin(cameraYawOffset);
+      const rotDir = new THREE.Vector3(
+        baseDir.x * cosY - baseDir.z * sinY,
+        0,
+        baseDir.x * sinY + baseDir.z * cosY
+      );
+      const desiredCamPos = p.clone().add(rotDir).add(new THREE.Vector3(0, camHeight, 0));
       const desiredTarget = p.clone().add(tg.clone().multiplyScalar(3.5)).add(new THREE.Vector3(0, 1.1, 0));
       camera.position.lerp(desiredCamPos, 0.12);
       controls.target.lerp(desiredTarget, 0.12);
