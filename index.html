@@ -1650,6 +1650,7 @@ let personN = 0;
 function person(shirt, skinIdx = 0, s = 1, o = {}) {
   const n = personN++;
   const g = new THREE.Group();
+  g.rotation.order = "YXZ";
   const skin = flat(SKIN[skinIdx % SKIN.length]);
   const shorts = o.shorts ?? (n % 2 === 0);
   const pants = flat(PANTS[n % PANTS.length]), stripe = flat("#ffffff"), sole = soleMats[n % 3];
@@ -2743,6 +2744,7 @@ function addPlayerCap(p) {
 
 // 3D Player Character (身材不分男女的健美跑者，戴著帽子)
 const playerRunner = person(null, 1, 0.94, { top: teeMats, shorts: true, face: "smile" });
+playerRunner.g.rotation.order = "YXZ";
 addPlayerCap(playerRunner);
 bib(playerRunner);
 const playerJerry = jerryCan(1.0);
@@ -2763,8 +2765,9 @@ function animateRunner(p, t, speed, carrying) {
     p.legL.rotation.x = Math.sin(t) * legAmp;
     p.legR.rotation.x = -Math.sin(t) * legAmp;
 
-    p.g.position.y = 0.02 + Math.abs(Math.sin(t)) * 0.05;
-    p.g.rotation.x = 0.15;
+    // Leaning forward along running direction, perfectly upright with zero roll tilt
+    p.g.rotation.x = 0.12;
+    p.g.rotation.z = 0;
 
     p.armL.rotation.x = -Math.sin(t) * armAmp;
     p.armL.rotation.y = 0;
@@ -2782,8 +2785,8 @@ function animateRunner(p, t, speed, carrying) {
   } else {
     p.legL.rotation.x = 0;
     p.legR.rotation.x = 0;
-    p.g.position.y = 0.02;
-    p.g.rotation.x = 0.02;
+    p.g.rotation.x = 0.0;
+    p.g.rotation.z = 0;
 
     p.armL.rotation.set(0, 0, -0.08);
     p.armR.rotation.set(0, 0, carrying ? 0.18 : 0.08);
@@ -3874,6 +3877,7 @@ function triggerFinish() {
   isFinished = true;
   runnerSpeed = 0;
   playerRunner.g.rotation.x = 0;
+  playerRunner.g.rotation.z = 0;
   if (isCarryingJerry) {
     playerRunner.armL.rotation.set(-2.6, 0, -0.4);
     playerRunner.armR.rotation.set(-1.0, 0, 0.3);
@@ -3916,11 +3920,13 @@ function updateRunnerTransform() {
   const tg = route.getTangentAt(runnerU);
   const nrm = new THREE.Vector3(tg.z, 0, -tg.x);
   playerRunner.g.position.copy(p).addScaledVector(nrm, runnerOffset);
-  playerRunner.g.position.y = 0.02;
+  const bounceY = (runnerSpeed > 0.0001 && !isFinished) ? Math.abs(Math.sin(stepCycle)) * 0.04 : 0;
+  playerRunner.g.position.y = 0.02 + bounceY;
 
   const yaw = Math.atan2(tg.x, tg.z);
   // Body leans in direction of movement: left = positive offset = lean right visually (+yaw), right = lean left (-yaw)
   playerRunner.g.rotation.y = yaw + (isHoldingLeft ? 0.18 : (isHoldingRight ? -0.18 : 0));
+  playerRunner.g.rotation.z = 0;
 }
 
 function updateRunHUD() {
