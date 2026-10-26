@@ -3318,14 +3318,15 @@ btnToggleAuto.onclick = () => {
   document.getElementById("autoStatus").textContent = isAutoRunning ? "On" : "Off";
 };
 
-const PLAYER_CRUISE_SPEED = 0.00063; // Cruise speed: between male runner (~0.00070) and female runner (~0.00056)
-const PLAYER_MAX_SPRINT_SPEED = 0.00095; // Max sprint speed on fast taps (exceeding male runner 0.00074)
+const PLAYER_CRUISE_SPEED = 0.00065; // Cruise speed (holding forward / auto-run)
+const PLAYER_MAX_SPRINT_SPEED = 0.00118; // Max sprint speed when pressing vigorously (Top 5%~20%, beating male runners 0.00074)
 
 function stepForward() {
   if (isFinished) return;
   getAudioCtx();
-  // Stack speed boost on fast tapping to surpass male runners
-  runnerSpeed = Math.min(Math.max(runnerSpeed, PLAYER_CRUISE_SPEED) + 0.00009, PLAYER_MAX_SPRINT_SPEED);
+  // Pressing vigorously boosts speed into the top 20%
+  runnerSpeed = Math.min(Math.max(runnerSpeed, 0.00074) + 0.00011, PLAYER_MAX_SPRINT_SPEED);
+  runnerU += 0.00012; // Instant forward impulse per tap for immediate overtaking
   stepCycle += 1.8;
   animateRunner(playerRunner, stepCycle, runnerSpeed, isCarryingJerry);
   playStepSound();
@@ -3909,24 +3910,26 @@ function frame(now) {
 
   // --- Run Mode Per-Frame Update ---
   if (isRunMode) {
+    const frameRateScale = dt * 60;
     let targetSpeed = 0.0;
     if (isAutoRunning || isHoldingForward) {
       targetSpeed = PLAYER_CRUISE_SPEED;
     }
     if (runnerSpeed > targetSpeed) {
       // Sprint boost smoothly decays back to cruise speed on fast tapping
-      runnerSpeed += (targetSpeed - runnerSpeed) * 0.038;
+      runnerSpeed += (targetSpeed - runnerSpeed) * Math.min(1.0, 0.020 * frameRateScale);
     } else {
-      runnerSpeed += (targetSpeed - runnerSpeed) * 0.15;
+      runnerSpeed += (targetSpeed - runnerSpeed) * Math.min(1.0, 0.15 * frameRateScale);
     }
 
-    if (isHoldingLeft) runnerOffset = Math.max(runnerOffset - 0.024, -0.65);
-    if (isHoldingRight) runnerOffset = Math.min(runnerOffset + 0.024, 0.65);
-    runnerOffset *= 0.985;
+    if (isHoldingLeft) runnerOffset = Math.max(runnerOffset - 0.024 * frameRateScale, -0.65);
+    if (isHoldingRight) runnerOffset = Math.min(runnerOffset + 0.024 * frameRateScale, 0.65);
+    runnerOffset = Math.pow(0.985, frameRateScale) * runnerOffset;
 
     if (runnerSpeed > 0.0001 && !isFinished) {
-      runnerU += runnerSpeed;
-      stepCycle += runnerSpeed * 240;
+      const stepDelta = runnerSpeed * frameRateScale;
+      runnerU += stepDelta;
+      stepCycle += stepDelta * 240;
       animateRunner(playerRunner, stepCycle, runnerSpeed, isCarryingJerry);
 
       if (Math.sin(stepCycle) > 0.85) {

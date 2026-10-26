@@ -3347,14 +3347,15 @@ btnToggleAuto.onclick = () => {
   document.getElementById("autoStatus").textContent = isAutoRunning ? "開啟" : "關";
 };
 
-const PLAYER_CRUISE_SPEED = 0.00063; // 巡航速度：男跑者(~0.00070)與女跑者(~0.00056)中間
-const PLAYER_MAX_SPRINT_SPEED = 0.00095; // 快速按時最高衝刺速度（超越男跑者 0.00074）
+const PLAYER_CRUISE_SPEED = 0.00065; // 巡航速度（按住前進或自動跑）
+const PLAYER_MAX_SPRINT_SPEED = 0.00118; // 努力按時極速衝刺（穩居前 5%~20%，超越最快男跑者 0.00074）
 
 function stepForward() {
   if (isFinished) return;
   getAudioCtx();
-  // 快速按時每次疊加速度，可超越男跑者的速度
-  runnerSpeed = Math.min(Math.max(runnerSpeed, PLAYER_CRUISE_SPEED) + 0.00009, PLAYER_MAX_SPRINT_SPEED);
+  // 努力按前進時每次大幅疊加衝刺速度，即時超越其他人並穩排在前 20%
+  runnerSpeed = Math.min(Math.max(runnerSpeed, 0.00074) + 0.00011, PLAYER_MAX_SPRINT_SPEED);
+  runnerU += 0.00012; // 即時踏步推進，快速連續點擊時能瞬間衝刺超車
   stepCycle += 1.8;
   animateRunner(playerRunner, stepCycle, runnerSpeed, isCarryingJerry);
   playStepSound();
@@ -3986,24 +3987,26 @@ function frame(now) {
 
   // --- Run Mode Per-Frame Update ---
   if (isRunMode) {
+    const frameRateScale = dt * 60;
     let targetSpeed = 0.0;
     if (isAutoRunning || isHoldingForward) {
       targetSpeed = PLAYER_CRUISE_SPEED;
     }
     if (runnerSpeed > targetSpeed) {
       // 快速按所獲得的衝刺速度，平滑緩慢衰減回巡航速度，讓玩家持續超車
-      runnerSpeed += (targetSpeed - runnerSpeed) * 0.038;
+      runnerSpeed += (targetSpeed - runnerSpeed) * Math.min(1.0, 0.020 * frameRateScale);
     } else {
-      runnerSpeed += (targetSpeed - runnerSpeed) * 0.15;
+      runnerSpeed += (targetSpeed - runnerSpeed) * Math.min(1.0, 0.15 * frameRateScale);
     }
 
-    if (isHoldingLeft) runnerOffset = Math.min(runnerOffset + 0.024, 0.65);
-    if (isHoldingRight) runnerOffset = Math.max(runnerOffset - 0.024, -0.65);
-    runnerOffset *= 0.985;
+    if (isHoldingLeft) runnerOffset = Math.min(runnerOffset + 0.024 * frameRateScale, 0.65);
+    if (isHoldingRight) runnerOffset = Math.max(runnerOffset - 0.024 * frameRateScale, -0.65);
+    runnerOffset = Math.pow(0.985, frameRateScale) * runnerOffset;
 
     if (runnerSpeed > 0.0001 && !isFinished) {
-      runnerU += runnerSpeed;
-      stepCycle += runnerSpeed * 240;
+      const stepDelta = runnerSpeed * frameRateScale;
+      runnerU += stepDelta;
+      stepCycle += stepDelta * 240;
       animateRunner(playerRunner, stepCycle, runnerSpeed, isCarryingJerry);
 
       if (Math.sin(stepCycle) > 0.85) {
